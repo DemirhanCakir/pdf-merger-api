@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "pdf-merger.fullname" . }}-config
+  labels:
+    {{- include "pdf-merger.labels" . | nindent 4 }}
+data:
+  APP_NAME: pdf-merger-api
+  LOG_LEVEL: {{ .Values.config.logLevel | quote }}
+  ENVIRONMENT: {{ .Values.config.environment | quote }}
+  S3_ENDPOINT_URL: {{ .Values.config.s3EndpointUrl | quote }}
+  S3_BUCKET: {{ .Values.config.s3Bucket | quote }}
+  S3_REGION: {{ .Values.config.s3Region | quote }}
+  MAX_UPLOAD_SIZE_MB: {{ .Values.config.maxUploadSizeMb | quote }}
+  MAX_MERGE_FILES: {{ .Values.config.maxMergeFiles | quote }}
+  OTEL_ENABLED: {{ .Values.config.otelEnabled | quote }}
+  OTEL_EXPORTER_OTLP_ENDPOINT: {{ .Values.config.otelExporterOtlpEndpoint | quote }}
+  OTEL_SERVICE_NAME: pdf-merger-api

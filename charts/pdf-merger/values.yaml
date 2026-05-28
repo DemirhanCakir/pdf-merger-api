@@ -1,0 +1,58 @@
+replicaCount: 2
+
+image:
+  repository: pdf-merger-api
+  tag: "0.1.0"
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8000
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+
+config:
+  logLevel: INFO
+  environment: production
+  s3EndpointUrl: http://localstack:4566
+  s3Bucket: pdf-merger
+  s3Region: us-east-1
+  maxUploadSizeMb: 25
+  maxMergeFiles: 20
+  otelEnabled: false
+  otelExporterOtlpEndpoint: http://jaeger-collector:4317
+
+secret:
+  databaseUrl: "postgresql+psycopg2://pdfuser:pdfpass@postgres:5432/pdfmerger"
+  awsAccessKeyId: "test"
+  awsSecretAccessKey: "test"
+
+autoscaling:
+  enabled: false           # set true to use HPA; KEDA recommended instead
+  minReplicas: 1
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 70
+
+keda:
+  enabled: false           # opt-in for KEDA ScaledObject
+  minReplicas: 1
+  maxReplicas: 5
+  prometheusServer: http://prometheus:9090
+  threshold: "10"
+
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "8000"
+  prometheus.io/path: "/metrics"
+
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  allowPrivilegeEscalation: false

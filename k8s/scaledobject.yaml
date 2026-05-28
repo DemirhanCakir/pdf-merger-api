@@ -1,0 +1,27 @@
+# KEDA ScaledObject (bonus +5) — scales pdf-merger-api based on request rate
+# coming from Prometheus. Requires KEDA installed in the cluster.
+#
+# Install KEDA (one-time):
+#   helm repo add kedacore https://kedacore.github.io/charts
+#   helm install keda kedacore/keda --namespace keda --create-namespace
+#
+# Apply:
+#   kubectl apply -f k8s/scaledobject.yaml
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: pdf-merger-api
+spec:
+  scaleTargetRef:
+    name: pdf-merger-api
+  pollingInterval: 15
+  cooldownPeriod: 60
+  minReplicaCount: 1
+  maxReplicaCount: 5
+  triggers:
+    - type: prometheus
+      metadata:
+        serverAddress: http://prometheus:9090
+        metricName: http_requests_total
+        threshold: "10"          # ≥10 req/s sustained → scale up
+        query: sum(rate(http_requests_total{job="pdf-merger-api"}[2m]))

@@ -1,0 +1,87 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pdf-merger-api"
+version = "0.1.0"
+description = "REST API that merges multiple PDF files into one. Cloud & Container Architecture final project."
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "demirhan", email = "demirhan4856@gmail.com" }]
+requires-python = ">=3.11"
+
+dependencies = [
+    "fastapi==0.115.6",
+    "uvicorn[standard]==0.34.0",
+    "python-multipart==0.0.20",
+    "pydantic==2.10.4",
+    "pydantic-settings==2.7.1",
+    "sqlalchemy==2.0.36",
+    "psycopg2-binary==2.9.10",
+    "alembic==1.14.0",
+    "boto3==1.35.92",
+    "pypdf==5.1.0",
+    "prometheus-fastapi-instrumentator==7.0.2",
+    "opentelemetry-api==1.29.0",
+    "opentelemetry-sdk==1.29.0",
+    "opentelemetry-exporter-otlp==1.29.0",
+    "opentelemetry-instrumentation-fastapi==0.50b0",
+    "opentelemetry-instrumentation-sqlalchemy==0.50b0",
+    "opentelemetry-instrumentation-botocore==0.50b0",
+    "python-json-logger==3.2.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==8.3.4",
+    "pytest-cov==6.0.0",
+    "pytest-asyncio==0.25.1",
+    "pytest-playwright==0.6.2",
+    "httpx==0.28.1",
+    "factory-boy==3.3.1",
+    "faker==33.3.1",
+    "testcontainers[postgres,localstack]==4.9.1",
+    "ruff==0.8.6",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+addopts = [
+    "-v",
+    "--strict-markers",
+    "--tb=short",
+]
+markers = [
+    "integration: integration tests using testcontainers",
+    "e2e: end-to-end tests using Playwright",
+]
+
+[tool.coverage.run]
+source = ["src"]
+omit = ["src/__init__.py", "*/migrations/*"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
+    "raise NotImplementedError",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W", "UP", "B", "SIM"]
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["B011"]
+"migrations/*" = ["E", "F", "W"]

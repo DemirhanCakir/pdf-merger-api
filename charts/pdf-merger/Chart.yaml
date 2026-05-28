@@ -1,0 +1,10 @@
+apiVersion: v2
+name: pdf-merger
+description: PDF Merger API — Helm chart
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords: [pdf, fastapi, microservice]
+maintainers:
+  - name: demirhan
+    email: demirhan4856@gmail.com
