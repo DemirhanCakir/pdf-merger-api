@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import os
-from typing import Iterator
+from collections.abc import Iterator
 
 import boto3
 import pytest
@@ -11,7 +11,6 @@ from botocore.config import Config
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-
 
 # ---------- session-scoped infra ----------
 

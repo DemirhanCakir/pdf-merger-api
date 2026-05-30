@@ -1,7 +1,7 @@
 import io
 import logging
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from pypdf import PdfReader, PdfWriter
 from sqlalchemy.orm import Session
@@ -70,14 +70,14 @@ def run_merge_job(job_id: uuid.UUID) -> None:
 
             job.status = JobStatus.completed
             job.output_s3_key = output_key
-            job.completed_at = datetime.now(timezone.utc)
+            job.completed_at = datetime.now(UTC)
             session.commit()
             logger.info("Merge job %s completed (%d pages)", job.id, count_pages(merged))
         except Exception as exc:
             logger.exception("Merge job %s failed", job.id)
             job.status = JobStatus.failed
             job.error_message = str(exc)[:1024]
-            job.completed_at = datetime.now(timezone.utc)
+            job.completed_at = datetime.now(UTC)
             session.commit()
     finally:
         session.close()

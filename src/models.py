@@ -1,6 +1,6 @@
 import enum
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import JSON, DateTime, Enum, Integer, String
 from sqlalchemy.dialects.postgresql import UUID
@@ -10,7 +10,7 @@ from src.db import Base
 
 
 def _utcnow() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 class JobStatus(str, enum.Enum):

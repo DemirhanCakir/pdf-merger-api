@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 from pydantic import ValidationError
@@ -27,7 +27,7 @@ def test_merge_request_rejects_more_than_max() -> None:
 
 def test_pdf_file_out_serializes_uuid_and_datetime() -> None:
     pid = uuid.uuid4()
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     out = PdfFileOut(
         id=pid, filename="x.pdf", size_bytes=100, page_count=3, uploaded_at=now
     )
@@ -43,7 +43,7 @@ def test_pdf_file_list_aggregates_items() -> None:
             filename="a.pdf",
             size_bytes=1,
             page_count=1,
-            uploaded_at=datetime.now(timezone.utc),
+            uploaded_at=datetime.now(UTC),
         )
     ]
     lst = PdfFileList(items=items, total=1)
@@ -56,6 +56,6 @@ def test_merge_job_out_carries_status_enum() -> None:
         id=uuid.uuid4(),
         status=JobStatus.completed,
         source_file_ids=[uuid.uuid4()],
-        created_at=datetime.now(timezone.utc),
+        created_at=datetime.now(UTC),
     )
     assert out.status == JobStatus.completed
