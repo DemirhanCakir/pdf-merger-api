@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PDF Merger</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #232635;
+      --border: #2e3148;
+      --accent: #6c63ff;
+      --accent-hover: #5a52e0;
+      --accent-dim: rgba(108,99,255,.15);
+      --green: #22c55e;
+      --red: #ef4444;
+      --yellow: #f59e0b;
+      --text: #e2e4ef;
+      --muted: #7b7f9e;
+      --radius: 10px;
+      --shadow: 0 4px 24px rgba(0,0,0,.4);
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: 14px;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 56px;
+    }
+    .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; }
+    .logo svg { color: var(--accent); }
+    .health-bar { display: flex; align-items: center; gap: 16px; }
+    .health-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); flex-shrink: 0; }
+    .dot.ok { background: var(--green); box-shadow: 0 0 6px var(--green); }
+    .dot.degraded { background: var(--red); box-shadow: 0 0 6px var(--red); }
+    .dot.checking { background: var(--yellow); animation: pulse 1.2s ease-in-out infinite; }
+
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+    /* ── Layout ── */
+    main { max-width: 1100px; margin: 0 auto; padding: 28px 24px; display: flex; flex-direction: column; gap: 28px; }
+
+    /* ── Card ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .card-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .card-title { font-weight: 600; font-size: 15px; display: flex; align-items: center; gap: 8px; }
+    .card-body { padding: 20px; }
+
+    /* ── Upload Zone ── */
+    .drop-zone {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 40px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color .2s, background .2s;
+      position: relative;
+    }
+    .drop-zone:hover, .drop-zone.over {
+      border-color: var(--accent);
+      background: var(--accent-dim);
+    }
+    .drop-zone input[type=file] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+    }
+    .drop-icon { font-size: 36px; margin-bottom: 8px; }
+    .drop-zone p { color: var(--muted); margin-top: 6px; font-size: 13px; }
+    .drop-zone strong { color: var(--text); }
+
+    /* ── Upload Progress ── */
+    #upload-progress { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }
+    .upload-item {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .upload-item .name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .upload-item .status { font-size: 12px; white-space: nowrap; }
+    .upload-item .status.ok { color: var(--green); }
+    .upload-item .status.err { color: var(--red); }
+    .progress-bar { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
+    .progress-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width .3s; }
+
+    /* ── Files Grid ── */
+    .files-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 12px;
+    }
+    .file-card {
+      background: var(--surface2);
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+      cursor: pointer;
+      transition: border-color .2s, background .2s;
+      user-select: none;
+      position: relative;
+    }
+    .file-card:hover { border-color: var(--accent); }
+    .file-card.selected { border-color: var(--accent); background: var(--accent-dim); }
+    .file-card .check {
+      position: absolute; top: 10px; right: 10px;
+      width: 18px; height: 18px;
+      border-radius: 50%; background: var(--border); border: 1px solid var(--muted);
+      display: flex; align-items: center; justify-content: center; font-size: 10px;
+      transition: background .2s;
+    }
+    .file-card.selected .check { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .file-icon { font-size: 28px; margin-bottom: 8px; }
+    .file-name { font-weight: 500; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .file-meta { color: var(--muted); font-size: 11px; margin-top: 4px; }
+
+    .empty-state { text-align: center; color: var(--muted); padding: 32px 0; font-size: 13px; }
+    .empty-icon { font-size: 32px; margin-bottom: 8px; }
+
+    /* ── Pagination ── */
+    .pagination { display: flex; align-items: center; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+    .pagination button {
+      background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text); padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 13px;
+      transition: background .2s;
+    }
+    .pagination button:hover:not(:disabled) { background: var(--border); }
+    .pagination button:disabled { opacity: .4; cursor: default; }
+    .page-info { color: var(--muted); font-size: 12px; }
+
+    /* ── Merge Panel ── */
+    .merge-bar {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 16px;
+      display: flex; align-items: center; gap: 12px;
+      flex-wrap: wrap;
+    }
+    .merge-count { font-size: 13px; color: var(--muted); }
+    .merge-count strong { color: var(--text); }
+    .selected-tags { display: flex; flex-wrap: wrap; gap: 6px; flex: 1; }
+    .tag {
+      background: var(--accent-dim); border: 1px solid var(--accent);
+      color: var(--accent); border-radius: 4px; padding: 2px 8px; font-size: 11px;
+      display: flex; align-items: center; gap: 4px;
+    }
+    .tag-remove { cursor: pointer; opacity: .7; }
+    .tag-remove:hover { opacity: 1; }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 18px; border-radius: 8px; border: none;
+      font-size: 13px; font-weight: 600; cursor: pointer;
+      transition: background .2s, opacity .2s;
+      white-space: nowrap;
+    }
+    .btn:disabled { opacity: .45; cursor: default; }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
+    .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+    .btn-ghost:hover:not(:disabled) { color: var(--text); border-color: var(--muted); }
+    .btn-sm { padding: 5px 12px; font-size: 12px; }
+    .btn-green { background: var(--green); color: #fff; }
+    .btn-green:hover:not(:disabled) { background: #16a34a; }
+
+    /* ── Jobs Table ── */
+    .jobs-list { display: flex; flex-direction: column; gap: 10px; }
+    .job-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 16px;
+      display: flex; align-items: center; gap: 14px;
+      flex-wrap: wrap;
+    }
+    .job-id { font-family: monospace; font-size: 11px; color: var(--muted); }
+    .job-info { flex: 1; min-width: 0; }
+    .job-files { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .job-date { font-size: 11px; color: var(--muted); }
+    .badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; flex-shrink: 0;
+    }
+    .badge.pending { background: rgba(245,158,11,.15); color: var(--yellow); }
+    .badge.processing { background: rgba(99,179,237,.15); color: #63b3ed; }
+    .badge.completed { background: rgba(34,197,94,.15); color: var(--green); }
+    .badge.failed { background: rgba(239,68,68,.15); color: var(--red); }
+    .spinner {
+      width: 10px; height: 10px; border: 2px solid currentColor;
+      border-top-color: transparent; border-radius: 50%;
+      animation: spin .8s linear infinite;
+      display: inline-block;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Toast ── */
+    #toast-container {
+      position: fixed; bottom: 24px; right: 24px;
+      display: flex; flex-direction: column; gap: 8px; z-index: 999;
+    }
+    .toast {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 8px; padding: 10px 16px;
+      display: flex; align-items: center; gap: 8px;
+      box-shadow: var(--shadow); font-size: 13px;
+      animation: slideIn .25s ease;
+      max-width: 340px;
+    }
+    .toast.success { border-left: 3px solid var(--green); }
+    .toast.error { border-left: 3px solid var(--red); }
+    .toast.info { border-left: 3px solid var(--accent); }
+    @keyframes slideIn { from { opacity:0; transform:translateX(20px); } to { opacity:1; transform:none; } }
+
+    /* ── Misc ── */
+    .section-actions { display: flex; gap: 8px; align-items: center; }
+    .divider { border: none; border-top: 1px solid var(--border); margin: 0; }
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <div class="logo">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+      <polyline points="14 2 14 8 20 8"/>
+      <line x1="9" y1="15" x2="15" y2="15"/>
+      <line x1="9" y1="11" x2="15" y2="11"/>
+    </svg>
+    PDF Merger
+  </div>
+  <div class="health-bar">
+    <div class="health-item">
+      <span class="dot checking" id="dot-db"></span>
+      <span id="label-db">Database</span>
+    </div>
+    <div class="health-item">
+      <span class="dot checking" id="dot-s3"></span>
+      <span id="label-s3">Storage</span>
+    </div>
+    <div class="health-item">
+      <span class="dot checking" id="dot-api"></span>
+      <span id="label-api">API</span>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <!-- Upload Card -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/>
+          <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
+        </svg>
+        Upload PDFs
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="drop-zone" id="drop-zone">
+        <input type="file" id="file-input" accept="application/pdf,.pdf" multiple />
+        <div class="drop-icon">📄</div>
+        <strong>Drop PDF files here or click to browse</strong>
+        <p>Max 25 MB per file · PDF only · Multiple files supported</p>
+      </div>
+      <div id="upload-progress"></div>
+    </div>
+  </div>
+
+  <!-- Files Library Card -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+        </svg>
+        Uploaded Files
+        <span id="files-total" style="background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:1px 8px;font-size:11px;font-weight:400;color:var(--muted)">0</span>
+      </div>
+      <div class="section-actions">
+        <button class="btn btn-ghost btn-sm" id="select-all-btn" onclick="toggleSelectAll()">Select All</button>
+        <button class="btn btn-ghost btn-sm" onclick="loadFiles(true)">↻ Refresh</button>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="files-grid" id="files-grid">
+        <div class="empty-state" style="grid-column:1/-1">
+          <div class="empty-icon">📂</div>
+          Loading files…
+        </div>
+      </div>
+      <div class="pagination" id="pagination"></div>
+    </div>
+  </div>
+
+  <!-- Merge Panel Card -->
+  <div class="card" id="merge-card">
+    <div class="card-header">
+      <div class="card-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/>
+        </svg>
+        Merge Selected Files
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="merge-bar">
+        <div class="merge-count"><strong id="sel-count">0</strong> files selected</div>
+        <div class="selected-tags" id="selected-tags"></div>
+        <button class="btn btn-ghost btn-sm" onclick="clearSelection()" id="clear-btn" disabled>Clear</button>
+        <button class="btn btn-primary" onclick="startMerge()" id="merge-btn" disabled>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M8 6H21M8 12H21M8 18H21M3 6h.01M3 12h.01M3 18h.01"/></svg>
+          Merge PDFs
+        </button>
+      </div>
+      <p style="margin-top:10px;font-size:12px;color:var(--muted)">Select at least 2 files from the library above. Files will be merged in the order shown.</p>
+    </div>
+  </div>
+
+  <!-- Jobs Card -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+        </svg>
+        Merge Jobs
+        <span id="jobs-count" style="background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:1px 8px;font-size:11px;font-weight:400;color:var(--muted)">0</span>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="loadJobs()">↻ Refresh</button>
+    </div>
+    <div class="card-body">
+      <div class="jobs-list" id="jobs-list">
+        <div class="empty-state">
+          <div class="empty-icon">🔀</div>
+          No merge jobs yet. Select files above and click Merge.
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- Toast Container -->
+<div id="toast-container"></div>
+
+<script>
+  // ── State ──────────────────────────────────────────────────────────────
+  const state = {
+    files: [],
+    total: 0,
+    page: 0,
+    pageSize: 12,
+    selected: new Map(), // id -> filename
+    jobs: [],
+    pollTimers: new Map(),
+  };
+
+  // ── API Helpers ────────────────────────────────────────────────────────
+  const api = (path, opts = {}) =>
+    fetch('/api/v1' + path, opts).then(async r => {
+      if (!r.ok) {
+        const text = await r.text().catch(() => '');
+        let msg;
+        try { msg = JSON.parse(text)?.detail || text; } catch { msg = text; }
+        throw new Error(msg || `HTTP ${r.status}`);
+      }
+      return r;
+    });
+
+  const apiJSON = (path, opts) => api(path, opts).then(r => r.json());
+
+  // ── Toast ──────────────────────────────────────────────────────────────
+  function toast(msg, type = 'info') {
+    const el = document.createElement('div');
+    el.className = `toast ${type}`;
+    const icons = { success: '✓', error: '✕', info: 'ℹ' };
+    el.innerHTML = `<span>${icons[type] || '·'}</span><span>${msg}</span>`;
+    document.getElementById('toast-container').appendChild(el);
+    setTimeout(() => el.remove(), 4000);
+  }
+
+  // ── Health Check ───────────────────────────────────────────────────────
+  async function checkHealth() {
+    const setDot = (id, status) => {
+      const el = document.getElementById(id);
+      el.className = 'dot ' + (status === 'ok' ? 'ok' : status === 'checking' ? 'checking' : 'degraded');
+    };
+    setDot('dot-api', 'checking');
+    try {
+      const data = await fetch('/health').then(r => r.json());
+      setDot('dot-api', 'ok');
+      setDot('dot-db', data.database === 'ok' ? 'ok' : 'degraded');
+      setDot('dot-s3', data.s3 === 'ok' ? 'ok' : 'degraded');
+    } catch {
+      setDot('dot-api', 'degraded');
+      setDot('dot-db', 'degraded');
+      setDot('dot-s3', 'degraded');
+    }
+  }
+
+  // ── Files ──────────────────────────────────────────────────────────────
+  async function loadFiles(resetPage = false) {
+    if (resetPage) state.page = 0;
+    const offset = state.page * state.pageSize;
+    try {
+      const data = await apiJSON(`/files?limit=${state.pageSize}&offset=${offset}`);
+      state.files = data.items;
+      state.total = data.total;
+      renderFiles();
+      renderPagination();
+      document.getElementById('files-total').textContent = data.total;
+    } catch (e) {
+      toast('Failed to load files: ' + e.message, 'error');
+    }
+  }
+
+  function renderFiles() {
+    const grid = document.getElementById('files-grid');
+    if (state.files.length === 0) {
+      grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
+        <div class="empty-icon">📂</div>
+        No PDFs uploaded yet. Drop some files above to get started.
+      </div>`;
+      return;
+    }
+    grid.innerHTML = state.files.map(f => {
+      const sel = state.selected.has(f.id);
+      const size = formatBytes(f.size_bytes);
+      return `<div class="file-card ${sel ? 'selected' : ''}" onclick="toggleFile('${f.id}', '${escHtml(f.filename)}')" title="${escHtml(f.filename)}">
+        <div class="check">${sel ? '✓' : ''}</div>
+        <div class="file-icon">📄</div>
+        <div class="file-name">${escHtml(f.filename)}</div>
+        <div class="file-meta">${f.page_count} page${f.page_count !== 1 ? 's' : ''} · ${size}</div>
+        <div class="file-meta" style="margin-top:2px;font-size:10px">${timeSince(f.uploaded_at)}</div>
+      </div>`;
+    }).join('');
+  }
+
+  function renderPagination() {
+    const totalPages = Math.ceil(state.total / state.pageSize);
+    const pg = document.getElementById('pagination');
+    if (totalPages <= 1) { pg.innerHTML = ''; return; }
+    pg.innerHTML = `
+      <button onclick="changePage(-1)" ${state.page === 0 ? 'disabled' : ''}>← Prev</button>
+      <span class="page-info">Page ${state.page + 1} of ${totalPages}</span>
+      <button onclick="changePage(1)" ${state.page >= totalPages - 1 ? 'disabled' : ''}>Next →</button>
+    `;
+  }
+
+  function changePage(delta) {
+    state.page += delta;
+    loadFiles();
+  }
+
+  function toggleFile(id, filename) {
+    if (state.selected.has(id)) state.selected.delete(id);
+    else state.selected.set(id, filename);
+    renderFiles();
+    renderMergeBar();
+  }
+
+  function clearSelection() {
+    state.selected.clear();
+    renderFiles();
+    renderMergeBar();
+  }
+
+  function toggleSelectAll() {
+    const allOnPage = state.files.every(f => state.selected.has(f.id));
+    if (allOnPage) state.files.forEach(f => state.selected.delete(f.id));
+    else state.files.forEach(f => state.selected.set(f.id, f.filename));
+    renderFiles();
+    renderMergeBar();
+  }
+
+  function renderMergeBar() {
+    const n = state.selected.size;
+    document.getElementById('sel-count').textContent = n;
+    document.getElementById('merge-btn').disabled = n < 2;
+    document.getElementById('clear-btn').disabled = n === 0;
+    const tagsEl = document.getElementById('selected-tags');
+    tagsEl.innerHTML = [...state.selected.entries()].map(([id, name]) =>
+      `<span class="tag">${escHtml(name.length > 20 ? name.slice(0,18)+'…' : name)}
+        <span class="tag-remove" onclick="toggleFile('${id}', '${escHtml(name)}');event.stopPropagation()">✕</span>
+      </span>`
+    ).join('');
+    document.getElementById('select-all-btn').textContent =
+      state.files.length > 0 && state.files.every(f => state.selected.has(f.id)) ? 'Deselect All' : 'Select All';
+  }
+
+  // ── Upload ─────────────────────────────────────────────────────────────
+  const dropZone = document.getElementById('drop-zone');
+  const fileInput = document.getElementById('file-input');
+
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('over'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('over'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault(); dropZone.classList.remove('over');
+    uploadFiles([...e.dataTransfer.files]);
+  });
+  fileInput.addEventListener('change', () => { uploadFiles([...fileInput.files]); fileInput.value = ''; });
+
+  async function uploadFiles(files) {
+    const pdfFiles = files.filter(f => f.type === 'application/pdf' || f.name.endsWith('.pdf'));
+    if (pdfFiles.length === 0) { toast('Please select PDF files only', 'error'); return; }
+    if (pdfFiles.length < files.length) toast(`${files.length - pdfFiles.length} non-PDF file(s) skipped`, 'info');
+
+    const container = document.getElementById('upload-progress');
+    const items = pdfFiles.map(f => {
+      const el = document.createElement('div');
+      el.className = 'upload-item';
+      el.innerHTML = `<span class="name" title="${escHtml(f.name)}">📄 ${escHtml(f.name)}</span>
+        <span class="status">Uploading…</span>`;
+      container.appendChild(el);
+      return { file: f, el };
+    });
+
+    for (const { file, el } of items) {
+      const statusEl = el.querySelector('.status');
+      try {
+        const form = new FormData();
+        form.append('file', file);
+        await api('/files', { method: 'POST', body: form });
+        statusEl.textContent = '✓ Uploaded';
+        statusEl.className = 'status ok';
+      } catch (e) {
+        statusEl.textContent = '✕ ' + e.message;
+        statusEl.className = 'status err';
+      }
+    }
+
+    await loadFiles(true);
+    setTimeout(() => items.forEach(({ el }) => el.remove()), 3000);
+    toast(`${pdfFiles.length} file(s) processed`, 'success');
+  }
+
+  // ── Merge ──────────────────────────────────────────────────────────────
+  async function startMerge() {
+    if (state.selected.size < 2) return;
+    const fileIds = [...state.selected.keys()];
+    const btn = document.getElementById('merge-btn');
+    btn.disabled = true; btn.textContent = 'Submitting…';
+
+    try {
+      const job = await apiJSON('/merge', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ file_ids: fileIds }),
+      });
+      toast('Merge job started!', 'success');
+      clearSelection();
+      state.jobs.unshift(job);
+      renderJobs();
+      pollJob(job.id);
+    } catch (e) {
+      toast('Merge failed: ' + e.message, 'error');
+    } finally {
+      btn.disabled = false; btn.innerHTML = `
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M8 6H21M8 12H21M8 18H21M3 6h.01M3 12h.01M3 18h.01"/></svg>
+        Merge PDFs`;
+    }
+  }
+
+  // ── Jobs ───────────────────────────────────────────────────────────────
+  async function loadJobs() {
+    // Jobs API doesn't have a list endpoint, so we display jobs tracked in session.
+    // Pull fresh status for each tracked job.
+    for (const job of state.jobs) {
+      if (job.status === 'pending' || job.status === 'processing') {
+        try {
+          const updated = await apiJSON(`/jobs/${job.id}`);
+          Object.assign(job, updated);
+        } catch {}
+      }
+    }
+    renderJobs();
+  }
+
+  function renderJobs() {
+    const list = document.getElementById('jobs-list');
+    document.getElementById('jobs-count').textContent = state.jobs.length;
+    if (state.jobs.length === 0) {
+      list.innerHTML = `<div class="empty-state"><div class="empty-icon">🔀</div>No merge jobs yet. Select files above and click Merge.</div>`;
+      return;
+    }
+    list.innerHTML = state.jobs.map(job => {
+      const fileCount = (job.source_file_ids || []).length;
+      const badge = badgeHTML(job.status);
+      const downloadBtn = job.status === 'completed'
+        ? `<button class="btn btn-green btn-sm" onclick="downloadJob('${job.id}')">⬇ Download</button>`
+        : '';
+      return `<div class="job-card">
+        <div class="job-info">
+          <div style="display:flex;align-items:center;gap:8px">
+            ${badge}
+            <span class="job-id">${job.id.slice(0,8)}…</span>
+          </div>
+          <div class="job-files">${fileCount} source file${fileCount !== 1 ? 's' : ''} · Created ${timeSince(job.created_at)}</div>
+          ${job.error_message ? `<div style="color:var(--red);font-size:11px;margin-top:3px">${escHtml(job.error_message)}</div>` : ''}
+        </div>
+        ${downloadBtn}
+      </div>`;
+    }).join('');
+  }
+
+  function badgeHTML(status) {
+    const spin = (status === 'processing') ? `<span class="spinner"></span>` : '';
+    const icons = { pending: '⏳', completed: '✓', failed: '✕' };
+    return `<span class="badge ${status}">${spin}${icons[status] || ''} ${status}</span>`;
+  }
+
+  function pollJob(jobId) {
+    if (state.pollTimers.has(jobId)) return;
+    const timer = setInterval(async () => {
+      try {
+        const job = await apiJSON(`/jobs/${jobId}`);
+        const idx = state.jobs.findIndex(j => j.id === jobId);
+        if (idx !== -1) state.jobs[idx] = job;
+        renderJobs();
+        if (job.status === 'completed' || job.status === 'failed') {
+          clearInterval(timer);
+          state.pollTimers.delete(jobId);
+          toast(
+            job.status === 'completed' ? 'Merge complete! Ready to download.' : 'Merge failed: ' + (job.error_message || 'unknown error'),
+            job.status === 'completed' ? 'success' : 'error'
+          );
+        }
+      } catch {
+        clearInterval(timer);
+        state.pollTimers.delete(jobId);
+      }
+    }, 2000);
+    state.pollTimers.set(jobId, timer);
+  }
+
+  async function downloadJob(jobId) {
+    try {
+      const r = await api(`/jobs/${jobId}/download`);
+      const blob = await r.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = `merged-${jobId.slice(0,8)}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast('Download started', 'success');
+    } catch (e) {
+      // Try presigned URL fallback
+      try {
+        const job = state.jobs.find(j => j.id === jobId);
+        if (job?.download_url) { window.open(job.download_url, '_blank'); }
+        else throw e;
+      } catch {
+        toast('Download failed: ' + e.message, 'error');
+      }
+    }
+  }
+
+  // ── Utils ──────────────────────────────────────────────────────────────
+  function formatBytes(b) {
+    if (b < 1024) return b + ' B';
+    if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
+    return (b / 1048576).toFixed(1) + ' MB';
+  }
+
+  function timeSince(iso) {
+    if (!iso) return '';
+    const diff = Date.now() - new Date(iso).getTime();
+    const s = Math.floor(diff / 1000);
+    if (s < 60) return `${s}s ago`;
+    const m = Math.floor(s / 60);
+    if (m < 60) return `${m}m ago`;
+    const h = Math.floor(m / 60);
+    if (h < 24) return `${h}h ago`;
+    return `${Math.floor(h / 24)}d ago`;
+  }
+
+  function escHtml(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ── Init ───────────────────────────────────────────────────────────────
+  checkHealth();
+  setInterval(checkHealth, 30000);
+  loadFiles();
+  setInterval(loadJobs, 5000);
+</script>
+</body>
+</html>

@@ -43,6 +43,8 @@ services:
         condition: service_healthy
       localstack:
         condition: service_healthy
+      jaeger:
+        condition: service_started
     environment:
       DATABASE_URL: postgresql+psycopg2://pdfuser:pdfpass@postgres:5432/pdfmerger
       S3_ENDPOINT_URL: http://localstack:4566
@@ -69,7 +71,8 @@ services:
     ports:
       - "9090:9090"
     depends_on:
-      - api
+      api:
+        condition: service_healthy
 
   grafana:
     image: grafana/grafana:11.4.0
@@ -88,7 +91,7 @@ services:
       - prometheus
 
   jaeger:
-    image: jaegertracing/all-in-one:1.62
+    image: jaegertracing/all-in-one:1.76.0
     container_name: pdfmerger-jaeger
     environment:
       COLLECTOR_OTLP_ENABLED: "true"

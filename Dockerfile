@@ -40,6 +40,7 @@ RUN pip install --no-index --find-links=/wheels /wheels/*.whl \
  && rm -rf /wheels
 
 COPY src/ ./src/
+COPY static/ ./static/
 COPY migrations/ ./migrations/
 COPY alembic.ini ./
 

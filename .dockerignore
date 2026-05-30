@@ -20,7 +20,7 @@ k8s/
 charts/
 monitoring/
 
-*.md
+
 .env
 .env.*
 !.env.example

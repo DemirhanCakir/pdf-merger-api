@@ -1,7 +1,10 @@
 import logging
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from prometheus_fastapi_instrumentator import Instrumentator
 
 from src.config import get_settings
@@ -47,6 +50,14 @@ def create_app() -> FastAPI:
     app.include_router(merge.router)
 
     Instrumentator().instrument(app).expose(app, endpoint="/metrics", include_in_schema=False)
+
+    static_dir = Path(__file__).parent.parent / "static"
+    if static_dir.is_dir():
+        app.mount("/static", StaticFiles(directory=static_dir), name="static")
+
+        @app.get("/", include_in_schema=False)
+        async def ui():
+            return FileResponse(static_dir / "index.html")
 
     setup_otel(app, get_engine())
 
