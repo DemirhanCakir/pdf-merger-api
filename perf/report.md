@@ -20,15 +20,12 @@
 Toplam çalışma süresi: ~100 saniye.
 
 ## Çalıştırma
+# URL'i öğren
+  minikube service pdf-merger-api-np --url
 
-```bash
-# Lokal stack ayakta:
-docker compose up -d --build
-k6 run -e BASE_URL=http://localhost:8000 perf/load-test.js
+  # Testi çalıştır (URL'i değiştir)
+  k6 run -e BASE_URL=http://192.168.49.2:30080 perf/load-test.js
 
-# Minikube üzerinde:
-k6 run -e BASE_URL=$(minikube service pdf-merger-api --url) perf/load-test.js
-```
 
 ## Threshold'lar
 
