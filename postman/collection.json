@@ -1,11 +1,12 @@
 {
   "info": {
     "name": "PDF Merger API",
-    "description": "End-to-end smoke flow for pdf-merger-api. Run with: newman run postman/collection.json --env-var baseUrl=http://localhost:8000",
+    "description": "End-to-end smoke flow for pdf-merger-api. Run with: newman run postman/collection.json --working-dir postman --env-var baseUrl=http://localhost:8000 --env-var filePath=sample/sample.pdf",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
     { "key": "baseUrl", "value": "http://localhost:8000" },
+    { "key": "filePath", "value": "sample/sample.pdf" },
     { "key": "tinyPdfB64", "value": "JVBERi0xLjQKMSAwIG9iago8PC9UeXBlIC9DYXRhbG9nIC9QYWdlcyAyIDAgUj4+CmVuZG9iagoyIDAgb2JqCjw8L1R5cGUgL1BhZ2VzIC9LaWRzIFszIDAgUl0gL0NvdW50IDE+PgplbmRvYmoKMyAwIG9iago8PC9UeXBlIC9QYWdlIC9QYXJlbnQgMiAwIFIgL01lZGlhQm94IFswIDAgNTk1IDg0Ml0gL1Jlc291cmNlcyA8PD4+IC9Db250ZW50cyA0IDAgUj4+CmVuZG9iago0IDAgb2JqCjw8L0xlbmd0aCAwPj4Kc3RyZWFtCmVuZHN0cmVhbQplbmRvYmoKeHJlZgowIDUKMDAwMDAwMDAwMCA2NTUzNSBmIAowMDAwMDAwMDA5IDAwMDAwIG4gCjAwMDAwMDAwNTggMDAwMDAgbiAKMDAwMDAwMDExNSAwMDAwMCBuIAowMDAwMDAwMjA1IDAwMDAwIG4gCnRyYWlsZXIKPDwvU2l6ZSA1IC9Sb290IDEgMCBSPj4Kc3RhcnR4cmVmCjI0NQolJUVPRgo=" }
   ],
   "item": [
@@ -38,26 +39,11 @@
         "body": {
           "mode": "formdata",
           "formdata": [
-            { "key": "file", "type": "file", "src": "./postman/sample.pdf" }
+            { "key": "file", "type": "file", "src": "{{filePath}}" }
           ]
         }
       },
       "event": [
-        {
-          "listen": "prerequest",
-          "script": {
-            "exec": [
-              "// Write the tiny PDF to disk if it doesn't exist (Newman runs in node).",
-              "const fs = require('fs');",
-              "const path = './postman/sample.pdf';",
-              "if (!fs.existsSync(path)) {",
-              "  const b64 = pm.collectionVariables.get('tinyPdfB64');",
-              "  fs.writeFileSync(path, Buffer.from(b64, 'base64'));",
-              "}"
-            ],
-            "type": "text/javascript"
-          }
-        },
         {
           "listen": "test",
           "script": {
@@ -80,7 +66,7 @@
         "body": {
           "mode": "formdata",
           "formdata": [
-            { "key": "file", "type": "file", "src": "./postman/sample.pdf" }
+            { "key": "file", "type": "file", "src": "{{filePath}}" }
           ]
         }
       },

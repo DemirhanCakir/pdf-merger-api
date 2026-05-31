@@ -201,7 +201,12 @@ jobs:
       - name: Install Newman
         run: npm install -g newman
       - name: Newman smoke
-        run: newman run postman/collection.json --env-var baseUrl=http://localhost:8000
+        run: |
+          ls -la postman
+          newman run postman/collection.json \
+            --working-dir postman \
+            --env-var baseUrl=http://localhost:8000 \
+            --env-var filePath=sample/sample.pdf
       - name: Install k6
         run: |
           curl -L https://github.com/grafana/k6/releases/download/v0.55.0/k6-v0.55.0-linux-amd64.tar.gz | tar xz
