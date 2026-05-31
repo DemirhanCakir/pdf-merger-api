@@ -42,5 +42,5 @@ def test_merge_rejects_empty_input() -> None:
 
 
 def test_count_pages_raises_on_garbage_bytes() -> None:
-    with pytest.raises(Exception):
+    with pytest.raises(Exception):  # noqa: B017
         count_pages(b"this is not a pdf")

@@ -1,5 +1,4 @@
 """Shared fixtures: Testcontainers Postgres + LocalStack S3 + FastAPI TestClient."""
-
 from __future__ import annotations
 
 import os

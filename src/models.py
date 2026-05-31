@@ -13,7 +13,7 @@ def _utcnow() -> datetime:
     return datetime.now(UTC)
 
 
-class JobStatus(str, enum.Enum):
+class JobStatus(enum.StrEnum):
     pending = "pending"
     processing = "processing"
     completed = "completed"

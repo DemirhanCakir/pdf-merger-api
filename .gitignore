@@ -17,6 +17,7 @@ ENV/
 .coverage
 .coverage.*
 coverage.xml
+PROJE_REHBERI.md
 htmlcov/
 .ruff_cache/
 
