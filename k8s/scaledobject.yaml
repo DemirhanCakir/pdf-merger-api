@@ -21,7 +21,7 @@ spec:
   triggers:
     - type: prometheus
       metadata:
-        serverAddress: http://prometheus:9090
+        serverAddress: http://monitoring-kube-prometheus-prometheus.monitoring.svc.cluster.local:9090
         metricName: http_requests_total
         threshold: "10"          # ≥10 req/s sustained → scale up
         query: sum(rate(http_requests_total{job="pdf-merger-api"}[2m]))
