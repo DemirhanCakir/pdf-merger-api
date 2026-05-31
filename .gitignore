@@ -20,7 +20,8 @@ coverage.xml
 PROJE_REHBERI.md
 htmlcov/
 .ruff_cache/
-
+charts/
+monitoring/
 .env
 .env.local
 *.local
