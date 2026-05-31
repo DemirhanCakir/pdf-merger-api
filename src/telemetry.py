@@ -34,5 +34,6 @@ def setup_otel(app, engine) -> None:
     FastAPIInstrumentor.instrument_app(app)
     SQLAlchemyInstrumentor().instrument(engine=engine)
     BotocoreInstrumentor().instrument()
-    logger.info("OpenTelemetry instrumentation enabled (endpoint=%s)",
-                settings.otel_exporter_otlp_endpoint)
+    logger.info(
+        "OpenTelemetry instrumentation enabled (endpoint=%s)", settings.otel_exporter_otlp_endpoint
+    )

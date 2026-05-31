@@ -5,6 +5,7 @@ Revises:
 Create Date: 2026-05-12
 
 """
+
 from collections.abc import Sequence
 
 import sqlalchemy as sa
@@ -33,9 +34,7 @@ def upgrade() -> None:
         ),
     )
 
-    job_status = sa.Enum(
-        "pending", "processing", "completed", "failed", name="job_status"
-    )
+    job_status = sa.Enum("pending", "processing", "completed", "failed", name="job_status")
     job_status.create(op.get_bind(), checkfirst=True)
 
     op.create_table(

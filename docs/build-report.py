@@ -32,24 +32,57 @@ OUT_PDF = ROOT / "final-report.pdf"
 def _styles() -> dict:
     s = getSampleStyleSheet()
     base = ParagraphStyle(
-        "body", parent=s["BodyText"], fontName="Helvetica", fontSize=10,
-        leading=14, alignment=TA_LEFT, spaceAfter=6,
+        "body",
+        parent=s["BodyText"],
+        fontName="Helvetica",
+        fontSize=10,
+        leading=14,
+        alignment=TA_LEFT,
+        spaceAfter=6,
     )
     return {
-        "title": ParagraphStyle("title", parent=s["Title"], fontSize=20, leading=24,
-                                 spaceAfter=12, textColor=colors.HexColor("#1f3a68")),
-        "h1": ParagraphStyle("h1", parent=s["Heading1"], fontSize=15, leading=18,
-                              spaceBefore=16, spaceAfter=8, textColor=colors.HexColor("#1f3a68")),
-        "h2": ParagraphStyle("h2", parent=s["Heading2"], fontSize=12, leading=15,
-                              spaceBefore=10, spaceAfter=6, textColor=colors.HexColor("#3a5fa8")),
-        "h3": ParagraphStyle("h3", parent=s["Heading3"], fontSize=11, leading=14,
-                              spaceBefore=8, spaceAfter=4),
+        "title": ParagraphStyle(
+            "title",
+            parent=s["Title"],
+            fontSize=20,
+            leading=24,
+            spaceAfter=12,
+            textColor=colors.HexColor("#1f3a68"),
+        ),
+        "h1": ParagraphStyle(
+            "h1",
+            parent=s["Heading1"],
+            fontSize=15,
+            leading=18,
+            spaceBefore=16,
+            spaceAfter=8,
+            textColor=colors.HexColor("#1f3a68"),
+        ),
+        "h2": ParagraphStyle(
+            "h2",
+            parent=s["Heading2"],
+            fontSize=12,
+            leading=15,
+            spaceBefore=10,
+            spaceAfter=6,
+            textColor=colors.HexColor("#3a5fa8"),
+        ),
+        "h3": ParagraphStyle(
+            "h3", parent=s["Heading3"], fontSize=11, leading=14, spaceBefore=8, spaceAfter=4
+        ),
         "body": base,
-        "code": ParagraphStyle("code", parent=base, fontName="Courier", fontSize=8,
-                                leading=10, leftIndent=10,
-                                backColor=colors.HexColor("#f4f4f4")),
-        "meta": ParagraphStyle("meta", parent=base, fontSize=9,
-                                textColor=colors.HexColor("#666666")),
+        "code": ParagraphStyle(
+            "code",
+            parent=base,
+            fontName="Courier",
+            fontSize=8,
+            leading=10,
+            leftIndent=10,
+            backColor=colors.HexColor("#f4f4f4"),
+        ),
+        "meta": ParagraphStyle(
+            "meta", parent=base, fontSize=9, textColor=colors.HexColor("#666666")
+        ),
     }
 
 
@@ -78,8 +111,9 @@ def _parse_table(lines: list[str], idx: int) -> tuple[Table, int]:
 
     styles = _styles()
     body_style = ParagraphStyle("tbl", parent=styles["body"], fontSize=8, leading=10)
-    head_style = ParagraphStyle("tblh", parent=body_style, fontName="Helvetica-Bold",
-                                  textColor=colors.white)
+    head_style = ParagraphStyle(
+        "tblh", parent=body_style, fontName="Helvetica-Bold", textColor=colors.white
+    )
 
     rendered = []
     for r_i, row in enumerate(rows):
@@ -87,17 +121,20 @@ def _parse_table(lines: list[str], idx: int) -> tuple[Table, int]:
         rendered.append([Paragraph(_inline(c), style) for c in row])
 
     table = Table(rendered, repeatRows=1, hAlign="LEFT")
-    table.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1f3a68")),
-        ("GRID", (0, 0), (-1, -1), 0.25, colors.HexColor("#999999")),
-        ("VALIGN", (0, 0), (-1, -1), "TOP"),
-        ("ROWBACKGROUNDS", (0, 1), (-1, -1),
-         [colors.white, colors.HexColor("#f7f7fa")]),
-        ("LEFTPADDING", (0, 0), (-1, -1), 4),
-        ("RIGHTPADDING", (0, 0), (-1, -1), 4),
-        ("TOPPADDING", (0, 0), (-1, -1), 3),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
-    ]))
+    table.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1f3a68")),
+                ("GRID", (0, 0), (-1, -1), 0.25, colors.HexColor("#999999")),
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f7f7fa")]),
+                ("LEFTPADDING", (0, 0), (-1, -1), 4),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 4),
+                ("TOPPADDING", (0, 0), (-1, -1), 3),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+            ]
+        )
+    )
     return table, idx
 
 
@@ -114,8 +151,9 @@ def md_to_flowables(md: str) -> list:
 
         if line.startswith("```"):
             if in_code:
-                flow.append(Paragraph("<br/>".join(code_buf).replace(" ", "&nbsp;"),
-                                       styles["code"]))
+                flow.append(
+                    Paragraph("<br/>".join(code_buf).replace(" ", "&nbsp;"), styles["code"])
+                )
                 flow.append(Spacer(1, 4))
                 code_buf = []
                 in_code = False
@@ -125,9 +163,7 @@ def md_to_flowables(md: str) -> list:
             continue
 
         if in_code:
-            safe = (line.replace("&", "&amp;")
-                          .replace("<", "&lt;")
-                          .replace(">", "&gt;"))
+            safe = line.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
             code_buf.append(safe)
             i += 1
             continue
@@ -173,8 +209,10 @@ def build() -> Path:
     doc = SimpleDocTemplate(
         str(OUT_PDF),
         pagesize=A4,
-        leftMargin=2 * cm, rightMargin=2 * cm,
-        topMargin=2 * cm, bottomMargin=2 * cm,
+        leftMargin=2 * cm,
+        rightMargin=2 * cm,
+        topMargin=2 * cm,
+        bottomMargin=2 * cm,
         title="PDF Merger API — Final Rapor",
         author="demirhan",
     )

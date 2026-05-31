@@ -72,6 +72,4 @@ def download_job(job_id: uuid.UUID, session: Session = Depends(get_session)) -> 
 
     data = s3_client.download_bytes(job.output_s3_key)
     headers = {"Content-Disposition": f'attachment; filename="merged-{job.id}.pdf"'}
-    return StreamingResponse(
-        iter([data]), media_type="application/pdf", headers=headers
-    )
+    return StreamingResponse(iter([data]), media_type="application/pdf", headers=headers)

@@ -28,9 +28,7 @@ def test_merge_request_rejects_more_than_max() -> None:
 def test_pdf_file_out_serializes_uuid_and_datetime() -> None:
     pid = uuid.uuid4()
     now = datetime.now(UTC)
-    out = PdfFileOut(
-        id=pid, filename="x.pdf", size_bytes=100, page_count=3, uploaded_at=now
-    )
+    out = PdfFileOut(id=pid, filename="x.pdf", size_bytes=100, page_count=3, uploaded_at=now)
     dumped = out.model_dump(mode="json")
     assert dumped["id"] == str(pid)
     assert dumped["filename"] == "x.pdf"
