@@ -3,6 +3,7 @@
 REST API that merges multiple PDF files into one. Final project for **Bulut & Konteyner Mimarisi** course.
 
 > Detailed documentation: [docs/final-report.pdf](docs/final-report.pdf) · Architecture: [docs/architecture.png](docs/architecture.png)
+                          Slides: [docs/slides.pdf](docs/slides.pdf)
 
 ## Stack
 
