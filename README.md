@@ -12,9 +12,9 @@ REST API that merges multiple PDF files into one. Final project for **Bulut & Ko
 - **Prometheus** + **Grafana** + **OpenTelemetry** + **Jaeger**
 - **GitHub Actions** CI/CD + **KEDA** autoscaling
 
-## Quickstart (local)
+## Quickstart (Docker)
 
-
+compose up -d --build
 
 Try a merge:
 
